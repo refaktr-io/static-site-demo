@@ -7,25 +7,6 @@ A demo of building a static website with Claude Code and hosting it on AWS. The 
 - `site/` holds the Juniper Coffee website. It is plain HTML, CSS and JavaScript, with every asset kept in the folder.
 - `architecture.html` is the architecture diagram shown in the video. It is published at https://refaktr-io.github.io/static-site-demo/architecture.html.
 
-## Live site
-
-https://d2wzxo0nro03bh.cloudfront.net
-
-It runs in AWS account 532931254745 in us-east-1. Every resource is tagged `Project=juniper-coffee-demo`.
-
-| Resource | Name or ID |
-|---|---|
-| S3 bucket, private | `juniper-coffee-site-532931254745` |
-| CloudFront origin access control | `E25J82THDSGU32` |
-| CloudFront distribution | `E2SW0EDSBCH40M` |
-
-To publish changes, upload the `site/` folder to the bucket, then clear the CloudFront cache.
-
-```bash
-aws s3 sync site/ s3://juniper-coffee-site-532931254745/ --delete --profile <aws-profile>
-aws cloudfront create-invalidation --distribution-id E2SW0EDSBCH40M --paths "/*" --profile <aws-profile>
-```
-
 ## Demo prompt
 
 This is the prompt used in the video to build and deploy the site with Claude Code. Paste it into a Claude Code session opened in this repo.
