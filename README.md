@@ -11,7 +11,7 @@ A demo of building a static website with Claude Code and hosting it on AWS. The 
 
 https://d2wzxo0nro03bh.cloudfront.net
 
-It runs in the refaktr AWS account (532931254745) in us-east-1. Every resource is tagged `Project=juniper-coffee-demo`.
+It runs in AWS account 532931254745 in us-east-1. Every resource is tagged `Project=juniper-coffee-demo`.
 
 | Resource | Name or ID |
 |---|---|
@@ -22,8 +22,8 @@ It runs in the refaktr AWS account (532931254745) in us-east-1. Every resource i
 To publish changes, upload the `site/` folder to the bucket, then clear the CloudFront cache.
 
 ```bash
-aws s3 sync site/ s3://juniper-coffee-site-532931254745/ --delete --profile refaktr
-aws cloudfront create-invalidation --distribution-id E2SW0EDSBCH40M --paths "/*" --profile refaktr
+aws s3 sync site/ s3://juniper-coffee-site-532931254745/ --delete --profile <aws-profile>
+aws cloudfront create-invalidation --distribution-id E2SW0EDSBCH40M --paths "/*" --profile <aws-profile>
 ```
 
 ## Demo prompt
@@ -46,7 +46,7 @@ Make it fully responsive.
 Keep it entirely static using HTML, CSS, and JavaScript. No backend, database, authentication, framework, build process, or external application services.
 Keep all required assets in the project.
 Use the available Frontend Design capabilities.
-Deploy the site to AWS using AWS Agent Toolkit and the AWS CLI profile `refaktr`.
+Deploy the site to AWS using AWS Agent Toolkit and the AWS CLI profile `<aws-profile>`.
 Choose the simplest secure, low-cost AWS architecture appropriate for this static site. Prefer managed services and avoid unnecessary complexity.
 Provision the AWS resources directly, without infrastructure as code.
 Before making AWS changes, briefly show:
@@ -69,6 +69,7 @@ Start with the design direction and proposed AWS architecture.
 
 ### Before you run it
 
-- Install the AWS CLI and sign in with a profile named `refaktr`.
+- Install the AWS CLI and create a named profile for the deployment, backed by an IAM role in the target account. Replace `<aws-profile>` in the prompt with that profile's name.
+- Give the role permission to create and configure S3 buckets, upload objects, and manage CloudFront distributions, origin access controls and invalidations. Scope it to what this demo needs rather than full administrator access.
 - Install the Agent Toolkit for AWS plugin in Claude Code, so Claude can work with your AWS account.
 - Install the Frontend Design plugin in Claude Code.
