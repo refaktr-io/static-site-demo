@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coffee Site Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=Lato:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #121214;
+    --surface-2: #17171a;
+    --border: #232326;
+    --border-strong: #303034;
+    --text: #ededee;
+    --text-secondary: #a0a3a8;
+    --text-tertiary: #6e7176;
+    --red: #ff3333;
+    --aws: #ff9900;
+    --font-display: "Archivo", "Lato", -apple-system, sans-serif;
+    --font-sans: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Fixed 1920x1080 stage, scaled to fit any window for screen recording */
+  .viewport { position: fixed; inset: 0; overflow: hidden; }
+  .stage {
+    width: 1920px; height: 1080px;
+    position: absolute; left: 50%; top: 50%;
+    transform-origin: center center;
+    transform: translate(-50%, -50%);
+    background:
+      radial-gradient(900px 600px at 88% 4%, rgba(255, 51, 51, 0.13), transparent 70%),
+      var(--bg);
+    overflow: hidden;
+  }
+  .stage::before, .stage::after {
+    content: ""; position: absolute; left: 0; right: 0; height: 6px; background: var(--red);
+  }
+  .stage::before { top: 0; }
+  .stage::after { bottom: 0; }
+
+  /* Header */
+  .brand {
+    position: absolute; left: 96px; top: 58px;
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -0.02em;
+  }
+  .brand svg { width: 34px; height: 34px; }
+  .headline {
+    position: absolute; left: 96px; top: 112px;
+    font-family: var(--font-display); font-weight: 800; font-stretch: 105%;
+    font-size: 66px; line-height: 1.04; letter-spacing: -0.04em;
+  }
+  .headline .accent { color: var(--red); }
+  .headline .accent-aws { color: var(--aws); }
+  .lede {
+    position: absolute; left: 96px; top: 206px; max-width: 1240px;
+    font-size: 24px; line-height: 1.45; color: var(--text-secondary);
+  }
+  .lede strong { color: var(--text); font-weight: 700; }
+
+  .legend {
+    position: absolute; right: 96px; top: 64px;
+    display: flex; gap: 32px; align-items: center;
+    font-size: 18px; color: var(--text-secondary);
+  }
+  .legend span { display: flex; align-items: center; gap: 12px; }
+  .legend i { width: 28px; height: 3px; border-radius: 2px; display: block; }
+  .legend .l-build i { background: var(--red); }
+  .legend .l-aws i { background: var(--aws); }
+  .legend .l-dns i { background: repeating-linear-gradient(90deg, var(--text-tertiary) 0 6px, transparent 6px 11px); }
+
+  /* Zones */
+  .zone {
+    position: absolute; top: 290px; height: 600px;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: rgba(18, 18, 20, 0.55);
+  }
+  .zone.build { left: 96px; width: 620px; }
+  .zone.aws { left: 776px; width: 1048px; }
+  .zone-title {
+    position: absolute; left: 28px; top: 24px;
+    font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .zone-title::before { content: ""; width: 10px; height: 10px; border-radius: 50%; }
+  .zone.build .zone-title::before { background: var(--red); }
+  .zone.aws .zone-title::before { background: var(--aws); }
+  .zone-note {
+    position: absolute; left: 48px; top: 62px; width: 320px;
+    font-size: 18px; line-height: 1.5; color: var(--text-tertiary);
+  }
+
+  /* Nodes */
+  .node {
+    position: absolute; height: 140px;
+    padding: 20px 22px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.9);
+  }
+  .node.build { border-left: 3px solid var(--red); }
+  .node.aws { border-left: 3px solid var(--aws); }
+  .node.people { border-left: 3px solid var(--text-tertiary); }
+  .node-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .node-head svg { width: 30px; height: 30px; flex: none; }
+  .node.build .node-head svg { color: var(--red); }
+  .node.aws .node-head svg { color: var(--aws); }
+  .node.people .node-head svg { color: var(--text-secondary); }
+  .node h3 {
+    font-family: var(--font-display); font-weight: 700; font-size: 25px; letter-spacing: -0.02em; line-height: 1.1;
+  }
+  .node p { font-size: 17px; line-height: 1.42; color: var(--text-secondary); }
+  .node code {
+    font-family: var(--font-mono); font-size: 15px; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px;
+  }
+  .node .prompt {
+    font-family: var(--font-mono); font-size: 16px; line-height: 1.5; color: var(--text);
+  }
+  .node .prompt::before { content: "> "; color: var(--red); }
+
+
+  /* AWS architecture diagram conventions: groups and service icons */
+  .aws-cloud {
+    position: absolute; left: 776px; top: 290px; width: 800px; height: 600px;
+    border: 1.5px solid #6e7176;
+  }
+  .region {
+    position: absolute; left: 836px; top: 640px; width: 240px; height: 236px;
+    border: 1.5px dashed #00a4a6;
+  }
+  .group-head {
+    position: absolute; left: 0; top: 0;
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: -0.01em;
+  }
+  .aws-cloud .group-head svg { width: 40px; height: 40px; display: block; }
+  .region .group-head { left: 10px; top: 8px; font-size: 17px; color: #4fd1d2; gap: 6px; }
+  .region .group-head svg { width: 22px; height: 22px; }
+  .aws-cloud .zone-note { left: 28px; top: 64px; }
+
+  .svc {
+    position: absolute; width: 260px; margin-left: -94px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .svc .tile { width: 72px; height: 72px; display: block; margin-bottom: 14px; }
+  .svc h3 { font-family: var(--font-display); font-weight: 700; font-size: 21px; letter-spacing: -0.015em; line-height: 1.15; }
+  .svc p { font-size: 16px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* Connectors */
+  svg.wires { position: absolute; inset: 0; width: 1920px; height: 1080px; pointer-events: none; overflow: visible; }
+  .wire { fill: none; stroke-width: 3; stroke-linecap: round; }
+  .wire.build { stroke: var(--red); }
+  .wire.aws { stroke: var(--aws); }
+  .wire.dns { stroke: var(--text-tertiary); stroke-dasharray: 8 8; stroke-width: 2.5; }
+  .flow { fill: none; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 22; opacity: 0.95; }
+  .flow.build { stroke: #ffd0d0; }
+  .flow.aws { stroke: #ffe2b8; }
+  .wire-label {
+    font-family: var(--font-mono); font-size: 15px; fill: var(--text-secondary);
+  }
+
+  /* Benefits */
+  .benefits {
+    position: absolute; left: 96px; right: 96px; top: 930px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px;
+  }
+  .benefit h4 {
+    font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; margin-bottom: 6px;
+  }
+  .benefit p { font-size: 17px; line-height: 1.45; color: var(--text-secondary); }
+
+  /* One orchestrated load sequence: pieces arrive in the order the work flows */
+  @media (prefers-reduced-motion: no-preference) {
+    .seq { opacity: 0; animation: arrive 0.6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(var(--i) * 180ms + 200ms); }
+    @keyframes arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .flow { animation: travel 1.4s linear infinite; }
+    @keyframes travel { to { stroke-dashoffset: -24; } }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flow { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="viewport">
+<main class="stage" id="stage" aria-label="Architecture diagram: a coffee shop website built with Claude Code and hosted on AWS">
+
+  <div class="brand">
+    <svg viewBox="0 0 32 32" fill="none" stroke="#ff3333" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M10 9 3 16l7 7M22 9l7 7-7 7M18.5 6l-5 20"/>
+    </svg>
+    Refaktr
+  </div>
+
+  <h1 class="headline">Build with <span class="accent">Claude Code</span>. Host on <span class="accent-aws">AWS</span>.</h1>
+  <p class="lede">How <strong>Driftwood Coffee</strong>, a fictional café, gets a fast and secure website without running a single server.</p>
+
+  <div class="legend" aria-label="Legend">
+    <span class="l-build"><i></i>Build and deploy</span>
+    <span class="l-aws"><i></i>Serving the site</span>
+    <span class="l-dns"><i></i>Domain lookup</span>
+  </div>
+
+  <!-- Zones -->
+  <section class="zone build seq" style="--i:0" aria-label="On your laptop">
+    <div class="zone-title">On your laptop</div>
+  </section>
+  <section class="aws-cloud seq" style="--i:3" aria-label="AWS Cloud">
+    <div class="group-head">
+      <svg class="aws-badge" viewBox="0 0 40 40" aria-hidden="true">
+        <rect width="40" height="40" fill="#232f3e"/>
+        <text x="20" y="21" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="14" fill="#fff">aws</text>
+        <path d="M9 26c6.5 4 15.5 4 22 0" stroke="#ff9900" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M28.5 24.4l3 1.4-1.6 2.9" stroke="#ff9900" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>AWS Cloud</span>
+    </div>
+    <p class="zone-note">Static files served from the edge. Nothing to patch, nothing idling.</p>
+  </section>
+  <section class="region seq" style="--i:4" aria-label="Region us-east-1">
+    <div class="group-head">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4L17 12H6" fill="none" stroke="#00a4a6" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      <span>Region us-east-1</span>
+    </div>
+  </section>
+
+  <!-- Build nodes -->
+  <div class="node build seq" style="--i:1; left:136px; top:350px; width:540px;">
+    <div class="node-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg>
+      <h3>Your prompt</h3>
+    </div>
+    <p class="prompt">Build a one-page site for Driftwood Coffee with the menu, hours and a map.</p>
+  </div>
+
+  <div class="node build seq" style="--i:2; left:136px; top:530px; width:540px;">
+    <div class="node-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="m7 10 3 2.5L7 15M12.5 15H17"/></svg>
+      <h3>Claude Code</h3>
+    </div>
+    <p>Writes the HTML, CSS and images, then reviews the site in a browser before anything ships.</p>
+  </div>
+
+  <div class="node build seq" style="--i:3; left:136px; top:710px; width:540px;">
+    <div class="node-head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-8 8-3-3 1.3-1.3a4 4 0 0 0-5-5L3 10l8-8 3 3Z" transform="scale(.9) translate(1.3 1.3)"/></svg>
+      <h3>AWS CLI + Agent Toolkit</h3>
+    </div>
+    <p>Gives Claude safe access to your account to create the resources and run <code>aws s3 sync</code>.</p>
+  </div>
+
+  <!-- AWS services, drawn in the AWS Architecture Icons style -->
+  <figure class="svc seq" style="--i:5; left:1300px; top:392px;">
+    <svg class="tile" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" fill="#8c4fff"/>
+      <path d="M32 12l15 6v11c0 10-6.4 18.4-15 23-8.6-4.6-15-13-15-23V18l15-6Z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+      <text x="32" y="38" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="14" fill="#fff">53</text>
+    </svg>
+    <figcaption><h3>Amazon Route 53</h3><p>DNS for driftwood.coffee</p></figcaption>
+  </figure>
+
+  <figure class="svc seq" style="--i:5; left:920px; top:730px;">
+    <svg class="tile" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" fill="#7aa116"/>
+      <ellipse cx="32" cy="21" rx="15" ry="5" fill="none" stroke="#fff" stroke-width="2.4"/>
+      <path d="M17 21l3.2 22.5c.4 2.6 5.5 4.5 11.8 4.5s11.4-1.9 11.8-4.5L47 21" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M32 31c7 3.4 13 6.6 16.5 9" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="31" cy="30.5" r="2.6" fill="#fff"/>
+    </svg>
+    <figcaption><h3>Amazon S3</h3><p>Private bucket for site files</p></figcaption>
+  </figure>
+
+  <figure class="svc seq" style="--i:6; left:1300px; top:730px;">
+    <svg class="tile" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" fill="#8c4fff"/>
+      <circle cx="32" cy="32" r="15" fill="none" stroke="#fff" stroke-width="2.4"/>
+      <ellipse cx="32" cy="32" rx="22" ry="8" fill="none" stroke="#fff" stroke-width="2" transform="rotate(-25 32 32)"/>
+      <circle cx="13" cy="41" r="3" fill="#fff"/>
+      <circle cx="51" cy="23" r="3" fill="#fff"/>
+      <circle cx="32" cy="32" r="3.2" fill="#fff"/>
+    </svg>
+    <figcaption><h3>Amazon CloudFront</h3><p>HTTPS and edge caching</p></figcaption>
+  </figure>
+
+  <figure class="svc users seq" style="--i:7; left:1700px; top:730px;">
+    <svg class="tile" viewBox="0 0 64 64" aria-hidden="true">
+      <g fill="none" stroke="#d5dbdb" stroke-width="2.2" stroke-linecap="round">
+        <circle cx="32" cy="22" r="7"/><path d="M19 47c0-8 5.8-13 13-13s13 5 13 13"/>
+        <circle cx="14" cy="27" r="5"/><path d="M5 46c0-6 3.6-9.5 9-9.5 2 0 3.6.4 5 1.3"/>
+        <circle cx="50" cy="27" r="5"/><path d="M59 46c0-6-3.6-9.5-9-9.5-2 0-3.6.4-5 1.3"/>
+      </g>
+    </svg>
+    <figcaption><h3>Customers</h3><p>Any phone, anywhere</p></figcaption>
+  </figure>
+
+  <!-- Connectors -->
+  <svg class="wires seq" style="--i:4" viewBox="0 0 1920 1080" aria-hidden="true">
+    <defs>
+      <marker id="ah-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#ff3333"/></marker>
+      <marker id="ah-aws" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#ff9900"/></marker>
+      <marker id="ah-dns" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#6e7176"/></marker>
+    </defs>
+
+    <!-- build chain -->
+    <path class="wire build" d="M406 491 V524" marker-end="url(#ah-red)"/>
+    <path class="wire build" d="M406 671 V704" marker-end="url(#ah-red)"/>
+    <!-- deploy to S3 -->
+    <path class="wire build" d="M677 766 H906" marker-end="url(#ah-red)"/>
+    <path class="flow build" d="M677 766 H906"/>
+    <text class="wire-label" x="738" y="752" text-anchor="middle">s3 sync</text>
+
+    <!-- S3 to CloudFront to customers -->
+    <path class="wire aws" d="M992 766 H1286" marker-end="url(#ah-aws)"/>
+    <path class="flow aws" d="M992 766 H1286"/>
+    <text class="wire-label" x="1183" y="752" text-anchor="middle">origin access control</text>
+    <path class="wire aws" d="M1372 766 H1680" marker-end="url(#ah-aws)"/>
+    <path class="flow aws" d="M1372 766 H1680"/>
+    <text class="wire-label" x="1520" y="752" text-anchor="middle">HTTPS</text>
+
+    <!-- DNS: customer looks up the domain, Route 53 answers with CloudFront -->
+    <path class="wire dns" d="M1736 722 V428 H1382" marker-end="url(#ah-dns)"/>
+    <text class="wire-label" x="1600" y="414" text-anchor="middle">driftwood.coffee</text>
+    <path class="wire dns" d="M1336 540 V716" marker-end="url(#ah-dns)"/>
+    <text class="wire-label" x="1350" y="640">alias record</text>
+  </svg>
+
+  <!-- Benefits -->
+  <div class="benefits">
+    <div class="benefit seq" style="--i:7">
+      <h4>About $1 a month</h4>
+      <p>Pay only for storage and traffic. A small café site often stays inside the free tier.</p>
+    </div>
+    <div class="benefit seq" style="--i:7">
+      <h4>Scales on its own</h4>
+      <p>A busy Saturday or a viral post is handled by CloudFront, with no capacity to plan.</p>
+    </div>
+    <div class="benefit seq" style="--i:7">
+      <h4>Fast everywhere</h4>
+      <p>Pages load from the edge location nearest each customer.</p>
+    </div>
+    <div class="benefit seq" style="--i:7">
+      <h4>Secure by default</h4>
+      <p>HTTPS on every request and a bucket the public can never reach directly.</p>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+  const stage = document.getElementById('stage');
+  function fit() {
+    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  window.addEventListener('resize', fit);
+  fit();
+</script>
+</body>
+</html>
